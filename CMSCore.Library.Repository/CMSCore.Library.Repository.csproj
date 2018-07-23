@@ -4,4 +4,9 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\CMSCore.Library.Data\CMSCore.Library.Data\CMSCore.Library.Data.csproj" />
+    <ProjectReference Include="..\..\CMSCore.Library.Messages\CMSCore.Library.Messages\CMSCore.Library.Messages.csproj" />
+  </ItemGroup>
+
 </Project>
