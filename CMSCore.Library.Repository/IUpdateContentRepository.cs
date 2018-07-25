@@ -5,8 +5,8 @@ namespace CMSCore.Library.Repository
 {
     public interface IUpdateContentRepository
     {
-        Task<string> UpdateContent(string contentId, string textContent);
-        Task<int> UpdateFeedItem(UpdateFeedItemViewModel model);
-        Task<int> UpdatePage(UpdatePageViewModel model);
+        Task<string> UpdateContent(UpdateContentViewModel model);
+        Task<string> UpdateFeedItem(UpdateFeedItemViewModel model);
+        Task<string> UpdatePage(UpdatePageViewModel model);
     }
 }

@@ -15,13 +15,13 @@
             _context = context;
         }
 
-        public async Task<string> UpdateContent(string contentId, string textContent)
+        public async Task<string> UpdateContent(UpdateContentViewModel model)
         {
             var content = await _context.Set<Content>()
                 .Include(x => x.ContentVersions)
-                .FirstOrDefaultAsync(x => x.Id == contentId);
+                .FirstOrDefaultAsync(x => x.Id == model.ContentId);
 
-            content.AddContentVersion(textContent);
+            content.AddContentVersion(model.TextContent);
 
             var result = _context.Update(content);
             await _context.SaveChangesAsync();
@@ -29,26 +29,28 @@
         }
 
 
-        public async Task<int> UpdatePage(UpdatePageViewModel model)
+        public async Task<string> UpdatePage(UpdatePageViewModel model)
         {
             var page = await _context.Set<Page>().FindAsync(model.Id);
             page.FeedEnabled = model.FeedEnabled;
             page.Name = model.Name;
 
-            _context.Update(page);
-            return await _context.SaveChangesAsync();
+          var result =  _context.Update(page);
+             await _context.SaveChangesAsync();
+            return result.Id;
         }
 
-        public async Task<int> UpdateFeedItem(UpdateFeedItemViewModel model)
+        public async Task<string> UpdateFeedItem(UpdateFeedItemViewModel model)
         {
             var feedItem = await _context.Set<FeedItem>().FindAsync(model.Id);
             feedItem.CommentsEnabled = model.CommentsEnabled;
             feedItem.Description = model.Description;
             feedItem.Title = model.Title;
 
-            _context.Update(feedItem);
+           var result = _context.Update(feedItem);
 
-            return await _context.SaveChangesAsync();
+              await _context.SaveChangesAsync();
+            return result.Id;
         }
     }
 }
