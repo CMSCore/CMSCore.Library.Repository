@@ -1,4 +1,4 @@
-﻿namespace CMSCore.Library.Repository.Implementations
+﻿namespace CMSCore.Library.Repository.Extensions
 {
     using System.Collections.Generic;
     using System.Linq;
