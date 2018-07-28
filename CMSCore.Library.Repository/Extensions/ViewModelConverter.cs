@@ -4,6 +4,8 @@
     using System.Linq;
     using Data.Models;
     using Messages;
+    using Messages.Read;
+    using Orleans.Concurrency;
 
     public class ViewModelConverter
     {
@@ -13,80 +15,85 @@
             var content = GetContent(feedItem.Content);
             var comments = GetCommentViewModels(feedItem.Comments);
 
-            var result = new FeedItemViewModel
-            {
-                Comments = comments,
-                CommentsEnabled = feedItem.CommentsEnabled,
-                Id = feedItem.Id,
-                Date = feedItem.Created,
-                Modified = feedItem.Modified,
-                Description = feedItem.Description,
-                Title = feedItem.Title,
-                FeedId = feedItem.FeedId,
-                Content = content,
-                NormalizedTitle = feedItem.NormalizedTitle,
-                Tags = tags
-            };
+            var result = new FeedItemViewModel(feedItem.Id, feedItem.Title, feedItem.NormalizedTitle, feedItem.CommentsEnabled, feedItem.Description, feedItem.FeedId, feedItem.Created, feedItem.Modified, comments, content, tags);
             return result;
+            //{
+            //    Comments = comments,
+            //    CommentsEnabled = feedItem.CommentsEnabled,
+            //    Id = feedItem.Id,
+            //    Created = feedItem.Created,
+            //    Modified = feedItem.Modified,
+            //    Description = feedItem.Description,
+            //    Title = feedItem.Title,
+            //    FeedId = feedItem.FeedId,
+            //    Content = content,
+            //    NormalizedTitle = feedItem.NormalizedTitle,
+            //    Tags = tags
+            //};
         }
 
-        private static CommentViewModel[] GetCommentViewModels(IEnumerable<Comment> comments)
+        private static CommentViewModel [ ] GetCommentViewModels(IEnumerable<Comment> comments)
         {
-            var results = comments?.Select(x => new CommentViewModel()
-            {
-                CommentId = x.Id,
-                Date = x.Created,
-                FullName = x.FullName,
-                Text = x.Content?.ActiveContentValue
-            });
-            return results?.ToArray();
+            var results = comments?.Select(x => new CommentViewModel(x.Id, x.Created, x.FullName, x.Content?.ActiveContentValue));
+            //{
+            //    CommentId = x.Id,
+            //    Created = x.Created,
+            //    FullName = x.FullName,
+            //    Text = x.Content?.ActiveContentValue
+            //});
+            var models = results?.ToArray();
+            return models;
         }
 
         public static ContentViewModel GetContent(Content content)
         {
             var activeVersion = content.ActiveContentVersion;
-            return new ContentViewModel
-            {
-                ContentId = content.Id,
-                VersionNumber = activeVersion.VersionNumber,
-                VersionId = activeVersion.Id,
-                Value = activeVersion.Value
-            };
+            var model = new ContentViewModel(content.Id, activeVersion.Id, activeVersion.VersionNumber, activeVersion.Value);
+            //{
+            //    ContentId = content.Id,
+            //    VersionNumber = activeVersion.VersionNumber,
+            //    VersionId = activeVersion.Id,
+            //    Value = activeVersion.Value
+            //};
+            return model;
         }
 
         public static FeedViewModel GetFeedViewModel(Feed feed)
         {
-            var feedItems = GetPreviewModels(feed.FeedItems);
-            return new FeedViewModel
-            {
-                Date = feed.Created,
-                Modified = feed.Modified,
-                Id = feed.Id,
-                Name = feed.Name,
-                NormalizedName = feed.NormalizedName,
-                FeedItems = feedItems
-            };
+            var feedItemsImmutable = GetPreviewModels(feed.FeedItems);
+            var feedViewModel = new FeedViewModel(feed.Id, feed.Name, feed.NormalizedName, feed.Created, feed.Modified, feedItemsImmutable);
+            return feedViewModel;
+
+
+            //{
+            //    Date = feed.Created,
+            //    Modified = feed.Modified,
+            //    Id = feed.Id,
+            //    Name = feed.Name,
+            //    NormalizedName = feed.NormalizedName,
+            //    FeedItems = feedItems
+            //};
         }
 
-        private static FeedItemPreviewViewModel[] GetPreviewModels(IEnumerable<FeedItem> feedItems)
+        private static FeedItemPreviewViewModel [ ] GetPreviewModels(IEnumerable<FeedItem> feedItems)
         {
-            var items = feedItems?.Select(x => new FeedItemPreviewViewModel
-            {
-                Date = x.Created,
-                Modified = x.Modified,
-                Id = x.Id,
-                Description = x.Description,
-                NormalizedTitle = x.NormalizedTitle,
-                Title = x.Title,
-                Tags = GetTags(x.Tags)
-            });
-            return items?.ToArray();
+            var items = feedItems?.Select(x => new FeedItemPreviewViewModel(x.Id, x.Title, x.NormalizedTitle, x.Description, x.Created, x.Modified, GetTags(x.Tags))).ToArray();
+            return items;
+            //{
+            //    Created = x.Created,
+            //    Modified = x.Modified,
+            //    Id = x.Id,
+            //    Description = x.Description,
+            //    NormalizedTitle = x.NormalizedTitle,
+            //    Title = x.Title,
+            //    Tags = GetTags(x.Tags)
+            //});
         }
 
-        public static TagViewModel[] GetTags(IEnumerable<Tag> tags)
+        public static TagViewModel [ ] GetTags(IEnumerable<Tag> tags)
         {
-            var results = tags?.Select(x => new TagViewModel { Id = x.Id, Name = x.Name, NormalizedName = x.NormalizedName });
-            return results?.ToArray();
+            var results = tags?.Select(x => new TagViewModel(x.Id, x.Name, x.NormalizedName)).ToArray();
+            return results;
         }
     }
 }

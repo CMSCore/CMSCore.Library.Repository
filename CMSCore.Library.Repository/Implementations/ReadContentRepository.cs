@@ -7,7 +7,9 @@
     using Data.Models;
     using Extensions;
     using Messages;
+    using Messages.Read;
     using Microsoft.EntityFrameworkCore;
+    using Orleans.Concurrency;
 
     public class ReadContentRepository : IReadContentRepository
     {
@@ -18,43 +20,40 @@
             _context = context;
         }
 
-        public async Task<IEnumerable<PageTreeViewModel>> GetPageTree()
+        public async Task<PageTreeViewModel [ ]> GetPageTree()
         {
-            var pages = await _context.Set<Page>().ToListAsync();
-
-            return pages.Select(x => new PageTreeViewModel
-            {
-                Id = x.Id,
-                Date = x.Created,
-                Name = x.Name,
-                NormalizedName = x.NormalizedName
-            });
+            return await _context.Set<Page>()
+                .Select(x => new PageTreeViewModel(x.Created, x.Id, x.Name, x.NormalizedName))
+                .ToArrayAsync();
         }
 
-        public async Task<IEnumerable<TagViewModel>> GetTags()
+        public async Task<TagViewModel [ ]> GetTags()
         {
-            var eq = new TagComparer();
-            var tagsDistinct = await _context.Set<Tag>().Distinct(eq).ToListAsync();
+            //var eq = new TagComparer();
+            var tagsDistinct = await _context.Set<Tag>()
+                //.Distinct(eq)
+                .ToListAsync();
             return ViewModelConverter.GetTags(tagsDistinct);
         }
 
-        public async Task<IEnumerable<UserViewModel>> GetUsers()
+        public async Task<UserViewModel [ ]> GetUsers()
         {
-            var vms = _context.Set<User>().Select(x => new UserViewModel
-            {
-                Id = x.Id,
-                Created = x.Created,
-                Modified = x.Modified,
-                Email = x.Email,
-                FirstName = x.FirstName,
-                IdentityUserId = x.IdentityUserId,
-                LastName = x.LastName
-            });
 
-            return await vms.ToListAsync();
+            var results = await _context.Set<User>().Select(x => new UserViewModel(x.Created, x.Email, x.FirstName, x.Id, x.IdentityUserId, x.LastName, x.Modified)).ToArrayAsync();
+
+            return results;
+            //{
+            //    Id = x.Id,
+            //    Created = x.Created,
+            //    Modified = x.Modified,
+            //    Email = x.Email,
+            //    FirstName = x.FirstName,
+            //    IdentityUserId = x.IdentityUserId,
+            //    LastName = x.LastName
+            //});
         }
- 
-         
+
+
         public async Task<FeedItemViewModel> GetFeedItem(string feedItemId)
         {
             var feedItem = await _context.Set<FeedItem>().FirstOrDefaultAsync(x => x.Id == feedItemId);
@@ -69,7 +68,6 @@
             return model;
         }
 
-       
 
         public async Task<PageViewModel> GetPageByNormalizedName(string normalizedName)
         {
@@ -80,21 +78,23 @@
                 .Include(x => x.Content)
                 .FirstOrDefaultAsync(x => x.NormalizedName == normalizedName);
 
-            if (page == null) return null;
 
             var content = ViewModelConverter.GetContent(page.Content);
             var feed = ViewModelConverter.GetFeedViewModel(page.Feed);
 
-            return new PageViewModel
-            {
-                Content = content,
-                Id = page.Id,
-                Date = page.Created,
-                Modified = page.Modified,
-                Name = page.Name,
-                NormalizedName = page.NormalizedName,
-                Feed = feed
-            };
+            var result = new PageViewModel(page.Id, page.Name, page.NormalizedName, page.Created, page.Modified, content, feed);
+            return (result);
+
+            //return new PageViewModel
+            //{
+            //    Content = content,
+            //    Id = page.Id,
+            //    Created = page.Created,
+            //    Modified = page.Modified,
+            //    Name = page.Name,
+            //    NormalizedName = page.NormalizedName,
+            //    Feed = feed
+            //};
         }
 
         public async Task<PageViewModel> GetPageById(string pageId)
@@ -106,25 +106,25 @@
                 .Include(x => x.Content)
                 .FirstOrDefaultAsync(x => x.Id == pageId);
 
-            if (page == null) return null;
 
             var content = ViewModelConverter.GetContent(page.Content);
             var feed = ViewModelConverter.GetFeedViewModel(page.Feed);
 
-            return new PageViewModel
-            {
-                Content = content,
-                Id = page.Id,
-                Date = page.Created,
-                Modified = page.Modified,
-                Name = page.Name,
-                NormalizedName = page.NormalizedName,
-                Feed = feed
-            };
+            var viewModel = new PageViewModel(page.Id, page.Name, page.NormalizedName, page.Created, page.Modified, content, feed);
+            return viewModel;
+            //{
+            //    Content = content,
+            //    Id = page.Id,
+            //    Created = page.Created,
+            //    Modified = page.Modified,
+            //    Name = page.Name,
+            //    NormalizedName = page.NormalizedName,
+            //    Feed = feed
+            //};
         }
 
 
-        public async Task<IEnumerable<TagViewModel>> GetTags(string feedItemId)
+        public async Task<TagViewModel [ ]> GetTags(string feedItemId)
         {
             var tags = await _context.Set<Tag>().Where(x => x.FeedItemId == feedItemId).ToListAsync();
 

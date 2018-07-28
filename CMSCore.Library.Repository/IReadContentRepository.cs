@@ -4,15 +4,18 @@ using CMSCore.Library.Messages;
 
 namespace CMSCore.Library.Repository
 {
+    using Messages.Read;
+    using Orleans.Concurrency;
+
     public interface IReadContentRepository
     {
         Task<FeedItemViewModel> GetFeedItem(string feedItemId);
         Task<FeedItemViewModel> GetFeedItemByNormalizedName(string normalizedName);
         Task<PageViewModel> GetPageById(string pageId);
         Task<PageViewModel> GetPageByNormalizedName(string normalizedName);
-        Task<IEnumerable<PageTreeViewModel>> GetPageTree();
-        Task<IEnumerable<TagViewModel>> GetTags();
-        Task<IEnumerable<TagViewModel>> GetTags(string feedItemId);
-        Task<IEnumerable<UserViewModel>> GetUsers();
+        Task<PageTreeViewModel [ ]> GetPageTree();
+        Task<TagViewModel [ ]> GetTags();
+        Task<TagViewModel [ ]> GetTags(string feedItemId);
+        Task<UserViewModel [ ]> GetUsers();
     }
 }

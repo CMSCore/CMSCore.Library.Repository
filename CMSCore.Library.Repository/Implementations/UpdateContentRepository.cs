@@ -4,6 +4,7 @@
     using Data.Context;
     using Data.Models;
     using Messages;
+    using Messages.Update;
     using Microsoft.EntityFrameworkCore;
 
     public class UpdateContentRepository : IUpdateContentRepository

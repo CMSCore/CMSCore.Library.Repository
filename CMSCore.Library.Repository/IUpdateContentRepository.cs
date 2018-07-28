@@ -3,6 +3,8 @@ using CMSCore.Library.Messages;
 
 namespace CMSCore.Library.Repository
 {
+    using Messages.Update;
+
     public interface IUpdateContentRepository
     {
         Task<string> UpdateContent(UpdateContentViewModel model);

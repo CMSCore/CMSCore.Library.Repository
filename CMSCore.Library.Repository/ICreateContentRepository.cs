@@ -4,6 +4,9 @@ using CMSCore.Library.Messages;
 
 namespace CMSCore.Library.Repository
 {
+    using Messages.Create;
+    using Messages.Read;
+
     public interface ICreateContentRepository
     {
         Task<string> CreateComment(CreateCommentViewModel model);
