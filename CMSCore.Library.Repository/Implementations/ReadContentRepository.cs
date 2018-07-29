@@ -1,5 +1,6 @@
 ﻿namespace CMSCore.Library.Repository.Implementations
 {
+    using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Threading.Tasks;
@@ -20,14 +21,14 @@
             _context = context;
         }
 
-        public async Task<PageTreeViewModel [ ]> GetPageTree()
+        public async Task<List<PageTreeViewModel>> GetPageTree()
         {
             return await _context.Set<Page>()
                 .Select(x => new PageTreeViewModel(x.Created, x.Id, x.Name, x.NormalizedName))
-                .ToArrayAsync();
+                .ToListAsync();
         }
 
-        public async Task<TagViewModel [ ]> GetTags()
+        public async Task<List<TagViewModel>> GetTags()
         {
             //var eq = new TagComparer();
             var tagsDistinct = await _context.Set<Tag>()
@@ -36,21 +37,11 @@
             return ViewModelConverter.GetTags(tagsDistinct);
         }
 
-        public async Task<UserViewModel [ ]> GetUsers()
+        public async Task<List<UserViewModel>> GetUsers()
         {
-
-            var results = await _context.Set<User>().Select(x => new UserViewModel(x.Created, x.Email, x.FirstName, x.Id, x.IdentityUserId, x.LastName, x.Modified)).ToArrayAsync();
+            var results = await _context.Set<User>().Select(x => new UserViewModel(x.Created, x.Email, x.FirstName, x.Id, x.IdentityUserId, x.LastName, x.Modified)).ToListAsync();
 
             return results;
-            //{
-            //    Id = x.Id,
-            //    Created = x.Created,
-            //    Modified = x.Modified,
-            //    Email = x.Email,
-            //    FirstName = x.FirstName,
-            //    IdentityUserId = x.IdentityUserId,
-            //    LastName = x.LastName
-            //});
         }
 
 
@@ -71,83 +62,86 @@
 
         public async Task<PageViewModel> GetPageByNormalizedName(string normalizedName)
         {
-            var page = await _context.Set<Page>()
-                .Include(x => x.Feed)
-                .ThenInclude(x => x.FeedItems)
-                .ThenInclude(x => x.Tags)
-                .Include(x => x.Content)
-                .FirstOrDefaultAsync(x => x.NormalizedName == normalizedName);
+            var pageSet = GetPageSetWithRelatedEntities();
+            var page = await pageSet.FirstOrDefaultAsync(x => x.NormalizedName == normalizedName);
 
+            if (page == null)
+            {
+                throw new Exception("Page could not be loaded");
+            }
 
             var content = ViewModelConverter.GetContent(page.Content);
             var feed = ViewModelConverter.GetFeedViewModel(page.Feed);
 
             var result = new PageViewModel(page.Id, page.Name, page.NormalizedName, page.Created, page.Modified, content, feed);
-            return (result);
-
-            //return new PageViewModel
-            //{
-            //    Content = content,
-            //    Id = page.Id,
-            //    Created = page.Created,
-            //    Modified = page.Modified,
-            //    Name = page.Name,
-            //    NormalizedName = page.NormalizedName,
-            //    Feed = feed
-            //};
+            return result;
         }
+
 
         public async Task<PageViewModel> GetPageById(string pageId)
         {
-            var page = await _context.Set<Page>()
-                .Include(x => x.Feed)
-                .ThenInclude(x => x.FeedItems)
-                .ThenInclude(x => x.Tags)
-                .Include(x => x.Content)
-                .FirstOrDefaultAsync(x => x.Id == pageId);
+            var pageSet = GetPageSetWithRelatedEntities();
+            var page = await pageSet.FirstOrDefaultAsync(x => x.Id == pageId);
 
+            if (page == null)
+            {
+                throw new Exception("Page could not be loaded");
+            }
 
             var content = ViewModelConverter.GetContent(page.Content);
             var feed = ViewModelConverter.GetFeedViewModel(page.Feed);
 
             var viewModel = new PageViewModel(page.Id, page.Name, page.NormalizedName, page.Created, page.Modified, content, feed);
             return viewModel;
-            //{
-            //    Content = content,
-            //    Id = page.Id,
-            //    Created = page.Created,
-            //    Modified = page.Modified,
-            //    Name = page.Name,
-            //    NormalizedName = page.NormalizedName,
-            //    Feed = feed
-            //};
         }
 
 
-        public async Task<TagViewModel [ ]> GetTags(string feedItemId)
+        public async Task<List<TagViewModel>> GetTags(string feedItemId)
         {
             var tags = await _context.Set<Tag>().Where(x => x.FeedItemId == feedItemId).ToListAsync();
 
             return ViewModelConverter.GetTags(tags);
         }
 
-
-        internal class TagComparer : IEqualityComparer<Tag>
+        private IQueryable<Page> GetPageSetWithRelatedEntities()
         {
-            public bool Equals(Tag x, Tag y)
-            {
-                if (x.NormalizedName.Equals(y.NormalizedName))
-                {
-                    return true;
-                }
-
-                return false;
-            }
-
-            public int GetHashCode(Tag obj)
-            {
-                return obj.GetHashCode();
-            }
+            return _context.Set<Page>().Include(x => x.Content).ThenInclude(x => x.ContentVersions).Include(x => x.Feed).ThenInclude(x => x.FeedItems).ThenInclude(x => x.Tags);
         }
     }
 }
+
+//{
+//    Id = x.Id,
+//    Created = x.Created,
+//    Modified = x.Modified,
+//    Email = x.Email,
+//    FirstName = x.FirstName,
+//    IdentityUserId = x.IdentityUserId,
+//    LastName = x.LastName
+//});
+//var pageSet = _context.Set<Page>()
+//    .Include(x => x.Feed)
+//    .ThenInclude(x => x.FeedItems)
+//    .ThenInclude(x => x.Tags)
+//    .Include(x => x.Content)
+//    .ThenInclude(x => x.ContentVersions);
+
+//return new PageViewModel
+//{
+//    Content = content,
+//    Id = page.Id,
+//    Created = page.Created,
+//    Modified = page.Modified,
+//    Name = page.Name,
+//    NormalizedName = page.NormalizedName,
+//    Feed = feed
+//};
+//{
+//    Content = content,
+//    Id = page.Id,
+//    Created = page.Created,
+//    Modified = page.Modified,
+//    Name = page.Name,
+//    NormalizedName = page.NormalizedName,
+//    Feed = feed
+//};
