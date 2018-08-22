@@ -44,17 +44,22 @@
             return results;
         }
 
-
+        private IQueryable<FeedItem> FeedItemSetWithRelatedEntities()
+        {
+            var set1 = _context.Set<FeedItem>();
+            set1.Include(x => x.Comments).ThenInclude(x => x.Content).ThenInclude(x => x.ContentVersions).Load();
+            return set1;
+        }
         public async Task<FeedItemViewModel> GetFeedItem(string feedItemId)
         {
-            var feedItem = await _context.Set<FeedItem>().FirstOrDefaultAsync(x => x.Id == feedItemId);
+            var feedItem = await FeedItemSetWithRelatedEntities().Include(x => x.Content).ThenInclude(x => x.ContentVersions).FirstOrDefaultAsync(x => x.Id == feedItemId);
             var model = ViewModelConverter.GetFeedItemViewModel(feedItem);
             return model;
         }
 
         public async Task<FeedItemViewModel> GetFeedItemByNormalizedName(string normalizedName)
         {
-            var feedItem = await _context.Set<FeedItem>().FirstOrDefaultAsync(x => x.NormalizedTitle == normalizedName);
+            var feedItem = await FeedItemSetWithRelatedEntities().Include(x => x.Content).ThenInclude(x => x.ContentVersions).FirstOrDefaultAsync(x => x.NormalizedTitle == normalizedName);
             var model = ViewModelConverter.GetFeedItemViewModel(feedItem);
             return model;
         }
